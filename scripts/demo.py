@@ -44,16 +44,16 @@ class ThreeDMatchDemo(Dataset):
 
     def __getitem__(self,item): 
         # get pointcloud
-        src_pcd = torch.load(self.src_path).astype(np.float32)
-        tgt_pcd = torch.load(self.tgt_path).astype(np.float32)   
+        # src_pcd = torch.load(self.src_path).astype(np.float32)
+        # tgt_pcd = torch.load(self.tgt_path).astype(np.float32)   
         
-        
-        #src_pcd = o3d.io.read_point_cloud(self.src_path)
-        #tgt_pcd = o3d.io.read_point_cloud(self.tgt_path)
-        #src_pcd = src_pcd.voxel_down_sample(0.025)
-        #tgt_pcd = tgt_pcd.voxel_down_sample(0.025)
-        #src_pcd = np.array(src_pcd.points).astype(np.float32)
-        #tgt_pcd = np.array(tgt_pcd.points).astype(np.float32)
+        # using .pcd file instead of .pth
+        src_pcd = o3d.io.read_point_cloud(self.src_path)
+        tgt_pcd = o3d.io.read_point_cloud(self.tgt_path)
+        src_pcd = src_pcd.voxel_down_sample(0.025)
+        tgt_pcd = tgt_pcd.voxel_down_sample(0.025)
+        src_pcd = np.array(src_pcd.points).astype(np.float32)
+        tgt_pcd = np.array(tgt_pcd.points).astype(np.float32)
 
 
         src_feats=np.ones_like(src_pcd[:,:1]).astype(np.float32)
@@ -102,43 +102,53 @@ def draw_registration_result(src_raw, tgt_raw, src_overlap, tgt_overlap, src_sal
     src_pcd_after = copy.deepcopy(src_pcd_before)
     src_pcd_after.transform(tsfm)
 
-    vis1 = o3d.visualization.Visualizer()
-    vis1.create_window(window_name='Input', width=960, height=540, left=0, top=0)
-    vis1.add_geometry(src_pcd_before)
-    vis1.add_geometry(tgt_pcd_before)
-
-    vis2 = o3d.visualization.Visualizer()
-    vis2.create_window(window_name='Inferred overlap region', width=960, height=540, left=0, top=600)
-    vis2.add_geometry(src_pcd_overlap)
-    vis2.add_geometry(tgt_pcd_overlap)
-
-    vis3 = o3d.visualization.Visualizer()
-    vis3.create_window(window_name ='Our registration', width=960, height=540, left=960, top=0)
-    vis3.add_geometry(src_pcd_after)
-    vis3.add_geometry(tgt_pcd_before)
+    # External Visualization
+    ev = o3d.visualization.ExternalVisualizer()
+    pcd_vis1 = src_pcd_before + tgt_pcd_before
+    pcd_vis2 = src_pcd_overlap + tgt_pcd_overlap
+    pcd_vis3 = src_pcd_after + tgt_pcd_before
+        
+    # ev.set([pcd_vis1, pcd_vis2, pcd_vis3])
+    ev.set([pcd_vis3])
     
-    while True:
-        vis1.update_geometry(src_pcd_before)
-        vis3.update_geometry(tgt_pcd_before)
-        if not vis1.poll_events():
-            break
-        vis1.update_renderer()
+    # # Local Visualization
+    # vis1 = o3d.visualization.Visualizer()
+    # vis1.create_window(window_name='Input', width=960, height=540, left=0, top=0)
+    # vis1.add_geometry(src_pcd_before)
+    # vis1.add_geometry(tgt_pcd_before)
 
-        vis2.update_geometry(src_pcd_overlap)
-        vis2.update_geometry(tgt_pcd_overlap)
-        if not vis2.poll_events():
-            break
-        vis2.update_renderer()
+    # vis2 = o3d.visualization.Visualizer()
+    # vis2.create_window(window_name='Inferred overlap region', width=960, height=540, left=0, top=600)
+    # vis2.add_geometry(src_pcd_overlap)
+    # vis2.add_geometry(tgt_pcd_overlap)
 
-        vis3.update_geometry(src_pcd_after)
-        vis3.update_geometry(tgt_pcd_before)
-        if not vis3.poll_events():
-            break
-        vis3.update_renderer()
+    # vis3 = o3d.visualization.Visualizer()
+    # vis3.create_window(window_name ='Our registration', width=960, height=540, left=960, top=0)
+    # vis3.add_geometry(src_pcd_after)
+    # vis3.add_geometry(tgt_pcd_before)
+    
+    # while True:
+    #     vis1.update_geometry(src_pcd_before)
+    #     vis3.update_geometry(tgt_pcd_before)
+    #     if not vis1.poll_events():
+    #         break
+    #     vis1.update_renderer()
 
-    vis1.destroy_window()
-    vis2.destroy_window()
-    vis3.destroy_window()    
+    #     vis2.update_geometry(src_pcd_overlap)
+    #     vis2.update_geometry(tgt_pcd_overlap)
+    #     if not vis2.poll_events():
+    #         break
+    #     vis2.update_renderer()
+
+    #     vis3.update_geometry(src_pcd_after)
+    #     vis3.update_geometry(tgt_pcd_before)
+    #     if not vis3.poll_events():
+    #         break
+    #     vis3.update_renderer()
+
+    # vis1.destroy_window()
+    # vis2.destroy_window()
+    # vis3.destroy_window()    
 
 
 def main(config, demo_loader):
@@ -222,7 +232,8 @@ if __name__ == '__main__':
     # create dataset and dataloader
     info_train = load_obj(config.train_info)
     train_set = IndoorDataset(info_train,config,data_augmentation=True)
-    demo_set = ThreeDMatchDemo(config, config.src_pcd, config.tgt_pcd)
+    # demo_set = ThreeDMatchDemo(config, config.src_pcd, config.tgt_pcd)
+    demo_set = ThreeDMatchDemo(config, "/home/karl/lidar_estimation/pcd_pkg/07_26_scale_model_reconstruction/full_minus_stern.pcd", "/home/karl/lidar_estimation/pcd_pkg/07_26_scale_model_reconstruction/masts_port.pcd")
 
     _, neighborhood_limits = get_dataloader(dataset=train_set,
                                         batch_size=config.batch_size,

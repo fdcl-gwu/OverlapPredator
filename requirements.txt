@@ -17,3 +17,4 @@ nibabel==3.2.1
 h5py==3.2.1
 coloredlogs==15.0
 gitpython==3.1.17
+protobuf==3.20.0
