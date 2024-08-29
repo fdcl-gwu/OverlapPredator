@@ -1,5 +1,5 @@
 ### Instructions for Remote Desktop over SSH
-1. setup environment
+1. Setup environment
 - ```$ ssh karl@161.253.72.9```
 - Install python3.8, as well as ``$ sudo apt install python3.8-distutils`` (using deadsnake ppa).
 - ``$ create venv with $ virtualenv predator_env --python=python3.8``
@@ -25,5 +25,6 @@
 4. Use External Visualizer
 - In Jetson terminal 1 (in venv): ```$ python -m open3d.visualization --external-vis```
 - In Jetson terminal 2 (in venv): ```$ ssh -R 51454:localhost:51454 karl@161.253.72.9```. This will ssh you into desktop computer.
+- Re-activate the virtualenv you made on the desktop/remote computer.
 - Run demo in terminal 2 (over ssh)``$ python scripts/demo.py configs/test/indoor.yaml``. You should have an Open3D window open showing the aligned ship point clouds.
     - This assumes you hardcoded the two ship .pcd files to align in demo.py
